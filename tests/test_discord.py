@@ -1,12 +1,10 @@
 import json
 import pytest
-from pathlib import Path
 from unittest.mock import MagicMock, patch
-
-from updaters.discord import DiscordUpdater, _load_etags, _save_etag, _format_etag
-
+from updaters.discord import DiscordUpdater, _load_etags, _save_etag
 
 # ─── Fixtures ─────────────────────────────────────────────────────────────────
+
 
 @pytest.fixture
 def updater(tmp_path, monkeypatch):
@@ -22,6 +20,7 @@ def updater(tmp_path, monkeypatch):
 
 
 # ─── _load_etags / _save_etag ─────────────────────────────────────────────────
+
 
 def test_load_etags_empty(tmp_path, monkeypatch):
     """Sem etags.json deve retornar dict vazio."""
@@ -48,6 +47,7 @@ def test_save_etag_preserves_others(tmp_path, monkeypatch):
 
 # ─── get_installed_version ────────────────────────────────────────────────────
 
+
 def test_get_installed_version_none(updater):
     """Sem etag salvo deve retornar None."""
     assert updater.get_installed_version() is None
@@ -62,6 +62,7 @@ def test_get_installed_version_existing(updater, tmp_path, monkeypatch):
 
 
 # ─── get_latest_version ───────────────────────────────────────────────────────
+
 
 def test_get_latest_version_success(updater):
     """HEAD request com etag válido deve retornar o etag."""
@@ -98,6 +99,7 @@ def test_get_latest_version_timeout(updater):
 
 
 # ─── run() ────────────────────────────────────────────────────────────────────
+
 
 def test_run_already_updated(updater, tmp_path, monkeypatch):
     """Etag local igual ao servidor deve retornar 'ok'."""

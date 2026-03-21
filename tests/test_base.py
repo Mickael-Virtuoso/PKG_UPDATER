@@ -1,11 +1,9 @@
 import pytest
-from pathlib import Path
-from unittest.mock import MagicMock, patch, mock_open
-
+from unittest.mock import MagicMock, patch
 from updaters.discord import DiscordUpdater
 
-
 # ─── Fixture ──────────────────────────────────────────────────────────────────
+
 
 @pytest.fixture
 def updater(tmp_path, monkeypatch):
@@ -23,6 +21,7 @@ def updater(tmp_path, monkeypatch):
 
 
 # ─── download() ───────────────────────────────────────────────────────────────
+
 
 def test_download_success(updater, tmp_path):
     """Download bem-sucedido deve retornar o Path do arquivo."""
@@ -72,6 +71,7 @@ def test_download_creates_file_with_content(updater, tmp_path):
 
 
 # ─── install() ────────────────────────────────────────────────────────────────
+
 
 def test_install_success(updater, tmp_path):
     """Comando com returncode 0 deve retornar True."""
