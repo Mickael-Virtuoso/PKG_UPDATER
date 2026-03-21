@@ -1,0 +1,51 @@
+# Security Policy
+
+## Supported Versions
+
+| Version | Supported          |
+| ------- | ------------------ |
+| latest  | :white_check_mark: |
+
+## Reporting a Vulnerability
+
+If you discover a security vulnerability in **pkg_updater**, please follow the steps below:
+
+1. **Do not open a public issue** — this could expose the vulnerability before a fix is available.
+
+2. **Contact directly** — report the vulnerability privately via GitHub's Security Advisory:
+   - Go to the **Security** tab of this repository
+   - Click **"Report a vulnerability"**
+
+3. **Include in your report:**
+   - Description of the vulnerability
+   - Steps to reproduce
+   - Potential impact
+   - Suggested fix (if any)
+
+## Response Timeline
+
+| Step | Timeline |
+| ---- | -------- |
+| Acknowledgement of report | Within 48 hours |
+| Vulnerability assessment | Within 7 days |
+| Fix released | Within 30 days |
+
+## Scope
+
+The following are considered in scope for security reports:
+
+- Arbitrary code execution during package installation
+- Credential or token leakage in logs
+- Malicious package download via URL manipulation
+- ETag spoofing leading to installation of tampered packages
+
+## Out of Scope
+
+- Vulnerabilities in third-party dependencies (report directly to their maintainers)
+- Issues requiring physical access to the machine
+- Social engineering attacks
+
+---
+
+> This project takes security seriously.
+> All confirmed vulnerabilities will be disclosed responsibly after a fix is available.
