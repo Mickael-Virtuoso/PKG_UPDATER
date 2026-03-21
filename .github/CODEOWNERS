@@ -1,0 +1,30 @@
+# ─── Global owner — reviews all PRs ─────────────────────────────────────────
+
+- @Mickael-Vituoso
+
+# ─── Core files ──────────────────────────────────────────────────────────────
+
+main.py @Mickael-Vituoso
+config.py @Mickael-Vituoso
+logger.py @Mickael-Vituoso
+log_config.py @Mickael-Vituoso
+preferences.py @Mickael-Vituoso
+
+# ─── Updaters ─────────────────────────────────────────────────────────────────
+
+updaters/ @Mickael-Vituoso
+
+# ─── Tests ───────────────────────────────────────────────────────────────────
+
+tests/ @Mickael-Vituoso
+
+# ─── CI/CD & GitHub ──────────────────────────────────────────────────────────
+
+.github/ @Mickael-Vituoso
+.pre-commit-config.yaml @Mickael-Vituoso
+
+# ─── Dependencies ────────────────────────────────────────────────────────────
+
+requirements.txt @Mickael-Vituoso
+setup.cfg @Mickael-Vituoso
+pyproject.toml @Mickael-Vituoso
