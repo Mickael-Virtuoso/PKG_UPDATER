@@ -1,40 +1,39 @@
-import re
+import json
 import subprocess
 import requests
+from pathlib import Path
 
-from config import REQUEST_TIMEOUT
+from config import REQUEST_TIMEOUT, BASE_DIR
 from logger import logger
 from updaters.base import BaseUpdater
+
+# Arquivo que persiste os etags entre execuções
+ETAG_FILE = Path(BASE_DIR) / "etags.json"
+
+
+def _load_etags() -> dict:
+    if ETAG_FILE.exists():
+        with open(ETAG_FILE, "r") as f:
+            return json.load(f)
+    return {}
+
+
+def _save_etag(app_name: str, etag: str):
+    etags = _load_etags()
+    etags[app_name] = etag
+    with open(ETAG_FILE, "w") as f:
+        json.dump(etags, f, indent=2)
 
 
 class DiscordUpdater(BaseUpdater):
 
     def get_installed_version(self) -> str | None:
-        """Consulta o dpkg para saber a versão instalada."""
-        try:
-            result = subprocess.run(
-                ["dpkg", "-l", self.app_name],
-                capture_output=True,
-                text=True
-            )
-
-            for line in result.stdout.splitlines():
-                if line.startswith("ii") and self.app_name in line:
-                    # linha: "ii  discord  0.0.45  amd64  ..."
-                    parts = line.split()
-                    return parts[2]  # índice da versão
-
-        except Exception as e:
-            logger.error(f"[{self.app_name}] Erro ao checar versão instalada: {e}")
-
-        return None
+        """Retorna o etag salvo localmente — representa a versão instalada."""
+        etags = _load_etags()
+        return etags.get(self.app_name)
 
     def get_latest_version(self) -> str | None:
-        """
-        Faz um HEAD na URL de download e extrai a versão
-        pelo header Content-Disposition.
-        Ex: attachment; filename=discord-0.0.45.deb
-        """
+        """Retorna o etag atual do servidor — representa a versão disponível."""
         try:
             response = requests.head(
                 self.download_url,
@@ -43,26 +42,41 @@ class DiscordUpdater(BaseUpdater):
             )
             response.raise_for_status()
 
-            disposition = response.headers.get("Content-Disposition", "")
-            match = re.search(r"filename=\S+?-([\d.]+)\.deb", disposition)
+            etag = response.headers.get("etag", "").strip('"')
+            if etag:
+                return etag
 
-            if match:
-                return match.group(1)
-
-            logger.warning(f"[{self.app_name}] Não foi possível extrair versão do header.")
+            logger.warning(f"[{self.app_name}] ETag não encontrado nos headers.")
 
         except requests.RequestException as e:
             logger.error(f"[{self.app_name}] Erro ao checar versão mais recente: {e}")
 
         return None
-```
 
----
+    def run(self) -> None:
+        """Orquestra verificação, download e instalação salvando o etag ao final."""
+        logger.info(f"[{self.app_name}] Iniciando verificação...")
 
-## Como funciona a detecção de versão
-```
-HEAD https://discord.com/api/download?platform=linux&format=deb
-        ↓
-Content-Disposition: attachment; filename=discord-0.0.45.deb
-        ↓
-regex extrai → "0.0.45"
+        installed = self.get_installed_version()
+        latest    = self.get_latest_version()
+
+        if not latest:
+            logger.error(f"[{self.app_name}] Não foi possível obter a versão mais recente.")
+            return
+
+        if installed == latest:
+            logger.info(f"[{self.app_name}] Já está na versão mais recente. Nada a fazer.")
+            return
+
+        if not installed:
+            logger.info(f"[{self.app_name}] Não instalado. Baixando...")
+        else:
+            logger.info(f"[{self.app_name}] Nova versão detectada! Atualizando...")
+
+        filename = f"{self.app_name}-latest.deb"
+        file     = self.download(filename)
+
+        if file:
+            success = super().install(file)
+            if success:
+                _save_etag(self.app_name, latest)
