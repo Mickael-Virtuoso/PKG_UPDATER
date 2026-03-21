@@ -1,0 +1,8 @@
+# HTTP requests - baixar arquivos e checar versões
+requests==2.32.3
+
+# Comparação semântica de versões (ex: 0.0.45 > 0.0.44)
+packaging==24.2
+
+# Logs coloridos e formatados no terminal
+colorlog==6.9.0
