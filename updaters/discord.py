@@ -53,8 +53,8 @@ class DiscordUpdater(BaseUpdater):
 
         return None
 
-    def run(self) -> None:
-        """Orquestra verificação, download e instalação salvando o etag ao final."""
+    def run(self) -> str:
+        """Retorna: 'Atualizado', 'ok', ou 'erro'."""
         logger.info(f"[{self.app_name}] Iniciando verificação...")
 
         installed = self.get_installed_version()
@@ -62,16 +62,21 @@ class DiscordUpdater(BaseUpdater):
 
         if not latest:
             logger.error(f"[{self.app_name}] Não foi possível obter a versão mais recente.")
-            return
+            return "erro"
 
         if installed == latest:
             logger.info(f"[{self.app_name}] Já está na versão mais recente. Nada a fazer.")
-            return
+            return "ok"
 
         if not installed:
             logger.info(f"[{self.app_name}] Não instalado. Baixando...")
         else:
             logger.info(f"[{self.app_name}] Nova versão detectada! Atualizando...")
+
+        # ─── Dry-run — simula sem baixar nem instalar ─────────────────────────────
+        if self.dry_run:
+            logger.info(f"[{self.app_name}] [DRY-RUN] Pulando download e instalação.")
+            return "dry-run"
 
         filename = f"{self.app_name}-latest.deb"
         file     = self.download(filename)
@@ -80,3 +85,6 @@ class DiscordUpdater(BaseUpdater):
             success = super().install(file)
             if success:
                 _save_etag(self.app_name, latest)
+                return "atualizado"
+                
+        return "erro"

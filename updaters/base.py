@@ -4,17 +4,18 @@ import subprocess
 import requests
 import shlex
 
-from config import DOWNLOAD_DIR, REQUEST_TIMEOUT, MAX_RETRIES
+from config import DOWNLOAD_DIR, REQUEST_TIMEOUT,DOWNLOAD_TIMEOUT, MAX_RETRIES
 from logger import logger
 
 
 class BaseUpdater(ABC):
 
-    def __init__(self, app_name: str, download_url: str, install_cmd: str):
+    def __init__(self, app_name: str, download_url: str, install_cmd: str, dry_run: bool = False):
         self.app_name     = app_name
         self.download_url = download_url
         self.install_cmd  = install_cmd
         self.download_dir = Path(DOWNLOAD_DIR)
+        self.dry_run      = dry_run
 
     # ─── Métodos abstratos — cada app implementa o seu ────────────────────────
 
@@ -37,7 +38,11 @@ class BaseUpdater(ABC):
         for attempt in range(1, MAX_RETRIES + 1):
             try:
                 logger.info(f"[{self.app_name}] Baixando ({attempt}/{MAX_RETRIES}): {self.download_url}")
-                response = requests.get(self.download_url, stream=True, timeout=REQUEST_TIMEOUT)
+                response = requests.get(
+                    self.download_url, 
+                    stream=True, 
+                    timeout=(REQUEST_TIMEOUT, DOWNLOAD_TIMEOUT)
+                    )
                 response.raise_for_status()
 
                 with open(dest, "wb") as f:

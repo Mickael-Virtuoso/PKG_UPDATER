@@ -9,6 +9,7 @@ os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
 # ─── Configurações gerais ─────────────────────────────────────────────────────
 REQUEST_TIMEOUT = 15        # segundos para requisições HTTP
+DOWNLOAD_TIMEOUT = 120       # segundos para transferêcia completa
 MAX_RETRIES     = 3         # tentativas em caso de falha de download
 
 # ─── Apps configurados ────────────────────────────────────────────────────────
