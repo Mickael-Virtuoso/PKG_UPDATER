@@ -16,6 +16,7 @@ class BaseUpdater(ABC):
         self.install_cmd  = install_cmd
         self.download_dir = Path(DOWNLOAD_DIR)
         self.dry_run      = dry_run
+        logger.trace(f"[{self.app_name}] BaseUpdater instanciado. dry_run={self.dry_run}")
 
     # ─── Métodos abstratos — cada app implementa o seu ────────────────────────
 
@@ -34,6 +35,8 @@ class BaseUpdater(ABC):
     def download(self, filename: str) -> Path | None:
         """Baixa o arquivo e salva em downloads/. Retorna o Path ou None."""
         dest = self.download_dir / filename
+        logger.trace(f"[{self.app_name}] Destino do download: {dest}")
+        logger.debug(f"[{self.app_name}] Timeouts: connect={REQUEST_TIMEOUT}s, read={DOWNLOAD_TIMEOUT}s")
 
         for attempt in range(1, MAX_RETRIES + 1):
             try:
@@ -45,13 +48,20 @@ class BaseUpdater(ABC):
                     )
                 response.raise_for_status()
 
+                logger.debug(f"[{self.app_name}] HTTP {response.status_code} — Content-Length: {response.headers.get('content-length', 'desconhecido')} bytes")
+
+                total = 0
                 with open(dest, "wb") as f:
                     for chunk in response.iter_content(chunk_size=8192):
                         f.write(chunk)
+                        total += len(chunk)
 
+                logger.debug(f"[{self.app_name}] Total escrito em disco: {total / 1024 / 1024:.2f} MB")
                 logger.info(f"[{self.app_name}] Download concluído: {dest}")
                 return dest
 
+            except requests.Timeout:
+                logger.warning(f"[{self.app_name}] Tentativa {attempt} — timeout após {DOWNLOAD_TIMEOUT}s.")
             except requests.RequestException as e:
                 logger.warning(f"[{self.app_name}] Tentativa {attempt} falhou: {e}")
 
@@ -61,9 +71,11 @@ class BaseUpdater(ABC):
     def install(self, file: Path) -> bool:
         """Executa o comando de instalação. Retorna True se bem-sucedido."""
         cmd = self.install_cmd.format(file=shlex.quote(str(file)))
+        logger.trace(f"[{self.app_name}] Comando de instalação montado: {cmd}")
         logger.info(f"[{self.app_name}] Instalando: {cmd}")
 
         result = subprocess.run(cmd, shell=True)
+        logger.debug(f"[{self.app_name}] subprocess returncode: {result.returncode}")
 
         if result.returncode == 0:
             logger.info(f"[{self.app_name}] Instalação concluída com sucesso.")
@@ -73,28 +85,5 @@ class BaseUpdater(ABC):
             return False
 
     def run(self) -> None:
-        """Orquestra todo o fluxo de verificação, download e instalação."""
-        logger.info(f"[{self.app_name}] Iniciando verificação...")
-
-        installed = self.get_installed_version()
-        latest    = self.get_latest_version()
-
-        if not latest:
-            logger.error(f"[{self.app_name}] Não foi possível obter a versão mais recente.")
-            return
-
-        if not installed:
-            logger.info(f"[{self.app_name}] Não instalado. Instalando versão {latest}...")
-        else:
-            logger.info(f"[{self.app_name}] Instalado: {installed} | Disponível: {latest}")
-
-            from packaging.version import Version
-            if Version(installed) >= Version(latest):
-                logger.info(f"[{self.app_name}] Já está na versão mais recente. Nada a fazer.")
-                return
-
-        filename = f"{self.app_name}_{latest}.deb"
-        file     = self.download(filename)
-
-        if file:
-            self.install(file)
+        ###Orquestra too o fluxo — deve ser sobrescrito pelas subclasses.###
+        logger.trace(f"[{self.app_name}] BaseUpdater.run() chamado — deve ser sobrescrito.")

@@ -4,7 +4,7 @@
 
 LOG_LEVELS = {
     "TRACE":    False,   # rastreamento detalhado de fluxo interno
-    "DEBUG":    False,   # diagnóstico e inspeção de valores
+    "DEBUG":    True,   # diagnóstico e inspeção de valores
     "INFO":     True,    # fluxo normal de execução
     "WARNING":  True,    # situações inesperadas mas recuperáveis
     "ERROR":    True,    # falhas que impedem uma operação

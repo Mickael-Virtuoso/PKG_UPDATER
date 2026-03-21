@@ -1,9 +1,8 @@
 import json
-import subprocess
 import requests
 from pathlib import Path
 
-from config import REQUEST_TIMEOUT, BASE_DIR
+from config import REQUEST_TIMEOUT, BASE_DIR, MAX_RETRIES
 from logger import logger
 from updaters.base import BaseUpdater
 
@@ -12,53 +11,79 @@ ETAG_FILE = Path(BASE_DIR) / "etags.json"
 
 
 def _load_etags() -> dict:
+    logger.trace("Carregando etags.json do disco...")
     if ETAG_FILE.exists():
         with open(ETAG_FILE, "r") as f:
-            return json.load(f)
+            data = json.load(f)
+            logger.trace(f"etags.json carregado: {list(data.keys())}")
+            return data
+    logger.debug("etags.json não encontrado — retornando dict vazio.")
     return {}
 
 
 def _save_etag(app_name: str, etag: str):
+    logger.trace(f"Salvando etag para '{app_name}': {etag}")
     etags = _load_etags()
     etags[app_name] = etag
     with open(ETAG_FILE, "w") as f:
         json.dump(etags, f, indent=2)
+    logger.debug(f"etags.json atualizado com sucesso para '{app_name}'.")
 
 
 class DiscordUpdater(BaseUpdater):
 
     def get_installed_version(self) -> str | None:
         """Retorna o etag salvo localmente — representa a versão instalada."""
+        logger.trace(f"[{self.app_name}] Buscando etag local...")
         etags = _load_etags()
-        return etags.get(self.app_name)
+        version = etags.get(self.app_name)
+        if version:
+            logger.debug(f"[{self.app_name}] Etag local encontrado: {version}")
+        else:
+            logger.debug(f"[{self.app_name}] Nenhum etag local — app não instalado ainda.")
+        return version
 
     def get_latest_version(self) -> str | None:
-        """Retorna o etag atual do servidor — representa a versão disponível."""
-        try:
-            response = requests.head(
-                self.download_url,
-                timeout=REQUEST_TIMEOUT,
-                allow_redirects=True
-            )
-            response.raise_for_status()
+        """Retorna o etag atual do servidor com retry em caso de timeout."""
+        for attempt in range(1, MAX_RETRIES + 1):
+            try:
+                logger.trace(f"[{self.app_name}] HEAD request tentativa {attempt}/{MAX_RETRIES}: {self.download_url}")
+                response = requests.head(
+                    self.download_url,
+                    timeout=REQUEST_TIMEOUT,
+                    allow_redirects=True
+                )
+                response.raise_for_status()
 
-            etag = response.headers.get("etag", "").strip('"')
-            if etag:
-                return etag
+                logger.debug(f"[{self.app_name}] HTTP {response.status_code} recebido.")
+                logger.trace(f"[{self.app_name}] Headers completos: {dict(response.headers)}")
 
-            logger.warning(f"[{self.app_name}] ETag não encontrado nos headers.")
+                etag = response.headers.get("etag", "").strip('"')
+                if etag:
+                    logger.debug(f"[{self.app_name}] ETag do servidor: {etag}")
+                    return etag
 
-        except requests.RequestException as e:
-            logger.error(f"[{self.app_name}] Erro ao checar versão mais recente: {e}")
+                logger.warning(f"[{self.app_name}] ETag não encontrado nos headers.")
+                return None
 
+            except requests.Timeout:
+                logger.warning(f"[{self.app_name}] Tentativa {attempt}/{MAX_RETRIES} — timeout no HEAD request.")
+            except requests.RequestException as e:
+                logger.error(f"[{self.app_name}] Erro ao checar versão mais recente: {e}")
+                return None
+
+        logger.error(f"[{self.app_name}] Todas as {MAX_RETRIES} tentativas de HEAD falharam.")
         return None
 
     def run(self) -> str:
-        """Retorna: 'Atualizado', 'ok', ou 'erro'."""
+        """Retorna: 'atualizado', 'ok', 'dry-run' ou 'erro'."""
+        logger.trace(f"[{self.app_name}] DiscordUpdater.run() iniciado.")
         logger.info(f"[{self.app_name}] Iniciando verificação...")
 
         installed = self.get_installed_version()
         latest    = self.get_latest_version()
+
+        logger.debug(f"[{self.app_name}] Comparando — local: {installed} | servidor: {latest}")
 
         if not latest:
             logger.error(f"[{self.app_name}] Não foi possível obter a versão mais recente.")
@@ -73,18 +98,22 @@ class DiscordUpdater(BaseUpdater):
         else:
             logger.info(f"[{self.app_name}] Nova versão detectada! Atualizando...")
 
-        # ─── Dry-run — simula sem baixar nem instalar ─────────────────────────────
+        # ─── Dry-run — simula sem baixar nem instalar ─────────────────────────
         if self.dry_run:
             logger.info(f"[{self.app_name}] [DRY-RUN] Pulando download e instalação.")
+            logger.debug(f"[{self.app_name}] [DRY-RUN] Etag NÃO será salvo.")
             return "dry-run"
 
         filename = f"{self.app_name}-latest.deb"
-        file     = self.download(filename)
+        logger.trace(f"[{self.app_name}] Nome do arquivo definido: {filename}")
+        file = self.download(filename)
 
         if file:
             success = super().install(file)
             if success:
+                logger.trace(f"[{self.app_name}] Salvando novo etag após instalação bem-sucedida.")
                 _save_etag(self.app_name, latest)
                 return "atualizado"
-                
+
+        logger.error(f"[{self.app_name}] Falha no fluxo de atualização.")
         return "erro"
