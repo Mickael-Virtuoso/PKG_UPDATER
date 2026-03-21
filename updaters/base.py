@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 import subprocess
 import requests
+import shlex
 
 from config import DOWNLOAD_DIR, REQUEST_TIMEOUT, MAX_RETRIES
 from logger import logger
@@ -54,7 +55,7 @@ class BaseUpdater(ABC):
 
     def install(self, file: Path) -> bool:
         """Executa o comando de instalação. Retorna True se bem-sucedido."""
-        cmd = self.install_cmd.format(file=file)
+        cmd = self.install_cmd.format(file=shlex.quote(str(file)))
         logger.info(f"[{self.app_name}] Instalando: {cmd}")
 
         result = subprocess.run(cmd, shell=True)
