@@ -1,7 +1,9 @@
 import argparse
 from config import APPS
 from logger import logger
+from log_config import LOG_LEVELS
 from updaters import DiscordUpdater
+from preferences import load_preferences, ask_etag_preference
 
 UPDATER_MAP = {
     "discord":        DiscordUpdater,
@@ -17,6 +19,34 @@ STATUS_ICON = {
     "desabilitado": "⏭",
 }
 
+
+def resolve_etag_preference(args) -> bool | None:
+    """
+    Resolve a preferência de exibição do ETag.
+    Retorna True (completo), False (mascarado) ou None (DEBUG inativo).
+    """
+    if not LOG_LEVELS.get("DEBUG", False):
+        logger.trace("DEBUG inativo — preferência de ETag ignorada.")
+        return None
+
+    # ─── Flags explícitos — bypassa tudo ──────────────────────────────────────
+    if args.show_etag:
+        logger.debug("Flag --show-etag detectado — exibindo ETag completo.")
+        return True
+    if args.hide_etag:
+        logger.debug("Flag --hide-etag detectado — exibindo ETag mascarado.")
+        return False
+
+    # ─── Preferência salva ────────────────────────────────────────────────────
+    prefs = load_preferences()
+    if prefs.get("show_etag") is not None:
+        logger.debug(f"Preferência carregada do preferences.json: show_etag={prefs['show_etag']}")
+        return prefs["show_etag"]
+
+    # ─── Pergunta interativa ──────────────────────────────────────────────────
+    return ask_etag_preference()
+
+
 def main():
     parser = argparse.ArgumentParser(description="Packages Updater")
     parser.add_argument(
@@ -24,9 +54,23 @@ def main():
         action="store_true",
         help="Simula verificação sem baixar nem instalar"
     )
-    args = parser.parse_args()
 
-    logger.trace("Argumentos parsed — dry_run=%s", args.dry_run)
+    etag_group = parser.add_mutually_exclusive_group()
+    etag_group.add_argument(
+        "--show-etag",
+        action="store_true",
+        help="Exibe o ETag completo nos logs (requer DEBUG ativo)"
+    )
+    etag_group.add_argument(
+        "--hide-etag",
+        action="store_true",
+        help="Exibe o ETag mascarado nos logs (requer DEBUG ativo)"
+    )
+
+    args = parser.parse_args()
+    logger.trace(f"Argumentos parsed — dry_run={args.dry_run}, show_etag={args.show_etag}, hide_etag={args.hide_etag}")
+
+    show_etag = resolve_etag_preference(args)
 
     if args.dry_run:
         logger.info("🔍 Modo DRY-RUN ativo — nenhuma alteração será feita.")
@@ -63,6 +107,7 @@ def main():
                 download_url = app_config["download_url"],
                 install_cmd  = app_config["install_cmd"],
                 dry_run      = args.dry_run,
+                show_etag    = show_etag,  # ← novo
             )
             logger.trace(f"[{app_name}] Instância criada, chamando run()...")
             status = updater.run()

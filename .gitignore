@@ -9,3 +9,4 @@ __pycache__/
 *.log
 etags.json
 logs/
+preferences.json

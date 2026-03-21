@@ -22,7 +22,7 @@ def _load_etags() -> dict:
 
 
 def _save_etag(app_name: str, etag: str):
-    logger.trace(f"Salvando etag para '{app_name}': {etag}")
+    logger.trace(f"Salvando etag para '{app_name}'")
     etags = _load_etags()
     etags[app_name] = etag
     with open(ETAG_FILE, "w") as f:
@@ -30,7 +30,21 @@ def _save_etag(app_name: str, etag: str):
     logger.debug(f"etags.json atualizado com sucesso para '{app_name}'.")
 
 
+def _format_etag(etag: str, show_full: bool | None) -> str:
+    """Formata o ETag conforme preferência do usuário."""
+    if not etag:
+        return "N/A"
+    if show_full:
+        return etag
+    return f"{etag[:4]}...{etag[-4:]}"
+
+
 class DiscordUpdater(BaseUpdater):
+
+    def __init__(self, app_name: str, download_url: str, install_cmd: str, dry_run: bool = False, show_etag: bool | None = None):
+        super().__init__(app_name, download_url, install_cmd, dry_run)
+        self.show_etag = show_etag
+        logger.trace(f"[{self.app_name}] show_etag={self.show_etag}")
 
     def get_installed_version(self) -> str | None:
         """Retorna o etag salvo localmente — representa a versão instalada."""
@@ -38,7 +52,7 @@ class DiscordUpdater(BaseUpdater):
         etags = _load_etags()
         version = etags.get(self.app_name)
         if version:
-            logger.debug(f"[{self.app_name}] Etag local encontrado: {version}")
+            logger.debug(f"[{self.app_name}] Etag local encontrado: {_format_etag(version, self.show_etag)}")
         else:
             logger.debug(f"[{self.app_name}] Nenhum etag local — app não instalado ainda.")
         return version
@@ -60,7 +74,7 @@ class DiscordUpdater(BaseUpdater):
 
                 etag = response.headers.get("etag", "").strip('"')
                 if etag:
-                    logger.debug(f"[{self.app_name}] ETag do servidor: {etag}")
+                    logger.debug(f"[{self.app_name}] ETag do servidor: {_format_etag(etag, self.show_etag)}")
                     return etag
 
                 logger.warning(f"[{self.app_name}] ETag não encontrado nos headers.")
@@ -83,7 +97,7 @@ class DiscordUpdater(BaseUpdater):
         installed = self.get_installed_version()
         latest    = self.get_latest_version()
 
-        logger.debug(f"[{self.app_name}] Comparando — local: {installed} | servidor: {latest}")
+        logger.debug(f"[{self.app_name}] Comparando — local: {_format_etag(installed, self.show_etag)} | servidor: {_format_etag(latest, self.show_etag)}")
 
         if not latest:
             logger.error(f"[{self.app_name}] Não foi possível obter a versão mais recente.")
