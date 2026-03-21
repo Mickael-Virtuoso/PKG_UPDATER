@@ -51,30 +51,26 @@ def setup_logger(name: str = "pkg-updater") -> PkgLogger:
 
     # ─── Terminal — colorido ──────────────────────────────────────────────────
     console_handler = colorlog.StreamHandler()
-    console_handler.setFormatter(colorlog.ColoredFormatter(
-        fmt="%(log_color)s[%(asctime)s] [%(levelname)s]%(reset)s %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-        log_colors={
-            "TRACE":    "white",
-            "DEBUG":    "cyan",
-            "INFO":     "green",
-            "WARNING":  "yellow",
-            "ERROR":    "red",
-            "CRITICAL": "bold_red",
-        }
-    ))
+    console_handler.setFormatter(
+        colorlog.ColoredFormatter(
+            fmt="%(log_color)s[%(asctime)s] [%(levelname)s]%(reset)s %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+            log_colors={
+                "TRACE": "white",
+                "DEBUG": "cyan",
+                "INFO": "green",
+                "WARNING": "yellow",
+                "ERROR": "red",
+                "CRITICAL": "bold_red",
+            },
+        )
+    )
 
     # ─── Arquivo — sem cores, com rotação ────────────────────────────────────
-    file_handler = RotatingFileHandler(
-        LOG_FILE,
-        maxBytes=1 * 1024 * 1024,
-        backupCount=5,
-        encoding="utf-8"
+    file_handler = RotatingFileHandler(LOG_FILE, maxBytes=1 * 1024 * 1024, backupCount=5, encoding="utf-8")
+    file_handler.setFormatter(
+        logging.Formatter(fmt="[%(asctime)s] [%(levelname)s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
     )
-    file_handler.setFormatter(logging.Formatter(
-        fmt="[%(asctime)s] [%(levelname)s] %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S"
-    ))
 
     logger.addHandler(LevelFilterHandler(console_handler))
     logger.addHandler(LevelFilterHandler(file_handler))

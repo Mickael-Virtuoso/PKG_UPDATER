@@ -1,8 +1,17 @@
-# HTTP requests - baixar arquivos e checar versões
-requests==2.32.3
-
-# Comparação semântica de versões (ex: 0.0.45 > 0.0.44)
-packaging==24.2
-
-# Logs coloridos e formatados no terminal
+black==26.3.1
+certifi==2026.2.25
+charset-normalizer==3.4.6
+click==8.3.1
 colorlog==6.9.0
+flake8==7.3.0
+idna==3.11
+mccabe==0.7.0
+mypy_extensions==1.1.0
+packaging==24.2
+pathspec==1.0.4
+platformdirs==4.9.4
+pycodestyle==2.14.0
+pyflakes==3.4.0
+pytokens==0.4.1
+requests==2.32.3
+urllib3==2.6.3

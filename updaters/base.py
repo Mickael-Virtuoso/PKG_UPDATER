@@ -4,18 +4,18 @@ import subprocess
 import requests
 import shlex
 
-from config import DOWNLOAD_DIR, REQUEST_TIMEOUT,DOWNLOAD_TIMEOUT, MAX_RETRIES
+from config import DOWNLOAD_DIR, REQUEST_TIMEOUT, DOWNLOAD_TIMEOUT, MAX_RETRIES
 from logger import logger
 
 
 class BaseUpdater(ABC):
 
     def __init__(self, app_name: str, download_url: str, install_cmd: str, dry_run: bool = False):
-        self.app_name     = app_name
+        self.app_name = app_name
         self.download_url = download_url
-        self.install_cmd  = install_cmd
+        self.install_cmd = install_cmd
         self.download_dir = Path(DOWNLOAD_DIR)
-        self.dry_run      = dry_run
+        self.dry_run = dry_run
         logger.trace(f"[{self.app_name}] BaseUpdater instanciado. dry_run={self.dry_run}")
 
     # ─── Métodos abstratos — cada app implementa o seu ────────────────────────
@@ -42,13 +42,14 @@ class BaseUpdater(ABC):
             try:
                 logger.info(f"[{self.app_name}] Baixando ({attempt}/{MAX_RETRIES}): {self.download_url}")
                 response = requests.get(
-                    self.download_url, 
-                    stream=True, 
-                    timeout=(REQUEST_TIMEOUT, DOWNLOAD_TIMEOUT)
-                    )
+                    self.download_url,
+                    stream=True,
+                    timeout=(REQUEST_TIMEOUT, DOWNLOAD_TIMEOUT),
+                )
                 response.raise_for_status()
 
-                logger.debug(f"[{self.app_name}] HTTP {response.status_code} — Content-Length: {response.headers.get('content-length', 'desconhecido')} bytes")
+                content_length = response.headers.get("content-length", "desconhecido")
+                logger.debug(f"[{self.app_name}] HTTP {response.status_code} — Content-Length: {content_length} bytes")
 
                 total = 0
                 with open(dest, "wb") as f:
@@ -85,5 +86,5 @@ class BaseUpdater(ABC):
             return False
 
     def run(self) -> None:
-        ###Orquestra too o fluxo — deve ser sobrescrito pelas subclasses.###
+        # ─── Orquestra too o fluxo — deve ser sobrescrito pelas subclasses ────
         logger.trace(f"[{self.app_name}] BaseUpdater.run() chamado — deve ser sobrescrito.")

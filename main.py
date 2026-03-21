@@ -6,16 +6,16 @@ from updaters import DiscordUpdater
 from preferences import load_preferences, ask_etag_preference
 
 UPDATER_MAP = {
-    "discord":        DiscordUpdater,
-    "discord-ptb":    DiscordUpdater,
+    "discord": DiscordUpdater,
+    "discord-ptb": DiscordUpdater,
     "discord-canary": DiscordUpdater,
 }
 
 STATUS_ICON = {
-    "ok":           "✔",
-    "atualizado":   "🆙",
-    "dry-run":      "🔍",
-    "erro":         "✗",
+    "ok": "✔",
+    "atualizado": "🆙",
+    "dry-run": "🔍",
+    "erro": "✗",
     "desabilitado": "⏭",
 }
 
@@ -52,19 +52,19 @@ def main():
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Simula verificação sem baixar nem instalar"
+        help="Simula verificação sem baixar nem instalar",
     )
 
     etag_group = parser.add_mutually_exclusive_group()
     etag_group.add_argument(
         "--show-etag",
         action="store_true",
-        help="Exibe o ETag completo nos logs (requer DEBUG ativo)"
+        help="Exibe o ETag completo nos logs (requer DEBUG ativo)",
     )
     etag_group.add_argument(
         "--hide-etag",
         action="store_true",
-        help="Exibe o ETag mascarado nos logs (requer DEBUG ativo)"
+        help="Exibe o ETag mascarado nos logs (requer DEBUG ativo)",
     )
 
     args = parser.parse_args()
@@ -103,11 +103,11 @@ def main():
 
         try:
             updater = updater_class(
-                app_name     = app_name,
-                download_url = app_config["download_url"],
-                install_cmd  = app_config["install_cmd"],
-                dry_run      = args.dry_run,
-                show_etag    = show_etag,  # ← novo
+                app_name=app_name,
+                download_url=app_config["download_url"],
+                install_cmd=app_config["install_cmd"],
+                dry_run=args.dry_run,
+                show_etag=show_etag,  # ← novo
             )
             logger.trace(f"[{app_name}] Instância criada, chamando run()...")
             status = updater.run()
@@ -130,6 +130,7 @@ def main():
     logger.info("=" * 50)
     logger.info("  PACKAGES UPDATER — Concluído!")
     logger.info("=" * 50)
+
 
 if __name__ == "__main__":
     main()

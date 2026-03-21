@@ -41,7 +41,14 @@ def _format_etag(etag: str, show_full: bool | None) -> str:
 
 class DiscordUpdater(BaseUpdater):
 
-    def __init__(self, app_name: str, download_url: str, install_cmd: str, dry_run: bool = False, show_etag: bool | None = None):
+    def __init__(
+        self,
+        app_name: str,
+        download_url: str,
+        install_cmd: str,
+        dry_run: bool = False,
+        show_etag: bool | None = None,
+    ):
         super().__init__(app_name, download_url, install_cmd, dry_run)
         self.show_etag = show_etag
         logger.trace(f"[{self.app_name}] show_etag={self.show_etag}")
@@ -65,12 +72,13 @@ class DiscordUpdater(BaseUpdater):
                 response = requests.head(
                     self.download_url,
                     timeout=REQUEST_TIMEOUT,
-                    allow_redirects=True
+                    allow_redirects=True,
                 )
                 response.raise_for_status()
 
                 logger.debug(f"[{self.app_name}] HTTP {response.status_code} recebido.")
-                logger.trace(f"[{self.app_name}] Headers completos: {dict(response.headers)}")
+                headers = dict(response.headers)
+                logger.trace(f"[{self.app_name}] Headers completos: {headers}")
 
                 etag = response.headers.get("etag", "").strip('"')
                 if etag:
@@ -95,9 +103,13 @@ class DiscordUpdater(BaseUpdater):
         logger.info(f"[{self.app_name}] Iniciando verificação...")
 
         installed = self.get_installed_version()
-        latest    = self.get_latest_version()
+        latest = self.get_latest_version()
 
-        logger.debug(f"[{self.app_name}] Comparando — local: {_format_etag(installed, self.show_etag)} | servidor: {_format_etag(latest, self.show_etag)}")
+        logger.debug(
+            f"[{self.app_name}] Comparando — "
+            f"local: {_format_etag(installed, self.show_etag)} | "
+            f"servidor: {_format_etag(latest, self.show_etag)}"
+        )
 
         if not latest:
             logger.error(f"[{self.app_name}] Não foi possível obter a versão mais recente.")
