@@ -1,0 +1,18 @@
+blank_issues_enabled: false
+
+contact_links:
+  - name: 💬 General Discussion
+    url: https://github.com/MickaelVituoso/pkg_updater/discussions/new?category=general
+    about: General questions and conversation about pkg_updater
+
+  - name: 💡 Ideas & Feature Requests
+    url: https://github.com/MickaelVituoso/pkg_updater/discussions/new?category=ideas
+    about: Suggest new apps or features
+
+  - name: 🆘 Help & Support
+    url: https://github.com/MickaelVituoso/pkg_updater/discussions/new?category=q-a
+    about: Ask for help with installation or usage
+
+  - name: 🐧 Show & Tell
+    url: https://github.com/MickaelVituoso/pkg_updater/discussions/new?category=show-and-tell
+    about: Share how you are using pkg_updater
