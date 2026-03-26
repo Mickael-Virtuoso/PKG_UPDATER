@@ -108,10 +108,8 @@ LOG_LEVELS = {
 
 ### Agendamento automático
 
-```
 Para configurar a execução automática via **systemd timer**, veja o guia completo:
 👉 [SCHEDULING.md](SCHEDULING.md)
-```
 
 ### Adicionando um novo app
 
@@ -192,10 +190,8 @@ LOG_LEVELS = {
 
 ### Automatic Scheduling
 
-```
 To configure automatic execution via **systemd timer**, see the full guide:
 👉 [SCHEDULING.md](SCHEDULING.md)
-```
 
 ### Adding a New App
 
