@@ -1,0 +1,18 @@
+#!/bin/bash
+set -e
+
+SUDOERS_FILE="/etc/sudoers.d/pkg-updater"
+
+echo "🗑️  Removendo pkg-updater..."
+
+# ─── Para o timer se estiver ativo ────────────────────────────────────────────
+echo "  → Parando timer..."
+systemctl --user stop pkg-updater.timer 2>/dev/null || true
+systemctl --user disable pkg-updater.timer 2>/dev/null || true
+
+# ─── Remove sudoers ───────────────────────────────────────────────────────────
+echo "  → Removendo sudoers..."
+rm -f "$SUDOERS_FILE"
+
+echo "✅ pkg-updater removido."
+echo "Os arquivos de dados em ~/.local/share/pkg-updater foram mantidos."

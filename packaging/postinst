@@ -1,0 +1,34 @@
+#!/bin/bash
+set -e
+
+PKG_DIR="/usr/lib/pkg-updater"
+SUDOERS_FILE="/etc/sudoers.d/pkg-updater"
+
+echo "📦 Configurando pkg-updater..."
+
+# ─── Cria o .venv ─────────────────────────────────────────────────────────────
+echo "  → Criando ambiente virtual..."
+python3 -m venv "$PKG_DIR/.venv"
+
+# ─── Instala dependências ──────────────────────────────────────────────────────
+echo "  → Instalando dependências..."
+"$PKG_DIR/.venv/bin/pip" install --quiet -r "$PKG_DIR/requirements.txt"
+
+# ─── Configura sudoers ────────────────────────────────────────────────────────
+echo "  → Configurando sudoers..."
+echo "%sudo ALL=(ALL) NOPASSWD: /usr/bin/dpkg -i *" > "$SUDOERS_FILE"
+chmod 0440 "$SUDOERS_FILE"
+
+# ─── Recarrega systemd ────────────────────────────────────────────────────────
+echo "  → Recarregando systemd..."
+systemctl daemon-reload || true
+
+echo ""
+echo "✅ pkg-updater instalado com sucesso!"
+echo ""
+echo "Para ativar a execução automática diária:"
+echo "  systemctl --user enable --now pkg-updater.timer"
+echo ""
+echo "Para rodar manualmente:"
+echo "  pkg-updater"
+echo ""
