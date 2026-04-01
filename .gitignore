@@ -10,3 +10,5 @@ __pycache__/
 etags.json
 logs/
 preferences.json
+build/
+dist/
